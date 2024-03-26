@@ -1,0 +1,29 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="NEUTestingSuite">
+    <test name="Download Transcript Test">
+        <classes>
+            <class name="mytest.Scenario1Test" />
+        </classes>
+    </test>
+    <test name="Add To-Do Tasks">
+        <classes>
+            <class name="mytest.Scenario2Test" />
+        </classes>
+    </test>
+    <test name="Download a Classroom Guid">
+        <classes>
+            <class name="mytest.Scenario3Test" />
+        </classes>
+    </test>
+    <test name="Download a DATASET">
+        <classes>
+            <class name="mytest.Scenario4Test" />
+        </classes>
+    </test>
+    <test name="Update the Academic Calendar">
+        <classes>
+            <class name="mytest.Scenario5Test" />
+        </classes>
+    </test>
+    <!-- Additional <test> tags for the other scenarios -->
+</suite>

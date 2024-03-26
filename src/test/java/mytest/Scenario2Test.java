@@ -6,14 +6,19 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.Array;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Scenario2Test {
 
@@ -23,48 +28,64 @@ public class Scenario2Test {
 
     @BeforeClass
     public void setUp() {
+        // Set up ChromeDriver path
         WebDriverManager.chromedriver().setup();
         driver = new ChromeDriver();
         wait = new WebDriverWait(driver, 10);
-        new File(screenshotFolder).mkdirs();
+        // Create a folder to store screenshots
+        String screenshotsFolder = "./src/test/resources/screenshots/Scenario2/";
+        new File(screenshotsFolder).mkdirs();
+
     }
 
     @Test
     public void addTodoTasks() throws IOException, InterruptedException {
-        driver.get("https://canvas.instructure.com");
-        // Assume there are methods for login and navigation
-        // loginToCanvas();
-        // navigateToCalendar();
-
-        // Click on the "+" button to add a new event
-        WebElement addButton = driver.findElement(By.cssSelector("selector-for-add-button")); // Replace with actual selector
-        addButton.click();
-        takeScreenshot("01_AfterClickingAdd");
+        driver.get("https://northeastern.instructure.com/");
+        WebElement calendar = wait.until(ExpectedConditions.elementToBeClickable(
+                By.id("global_nav_calendar_link")));
+        takeScreenshot("00_AfterLoadingCanvas");
+        calendar.click();
 
         // Read event details from Excel
-        FileInputStream file = new FileInputStream(new File("path/to/excel.xlsx"));
-        Workbook workbook = new XSSFWorkbook(file);
-        Sheet sheet = workbook.getSheetAt(0);
-        for (int i = 0; i < 2; i++) {
-            Row row = sheet.getRow(i);
-            String title = row.getCell(0).getStringCellValue();
-            // Continue for Date, Time, Calendar, Details...
+        List<String[]> eventDetailsList = readExcel();
 
-            // Fill in the event details in the form
-            WebElement titleElement = driver.findElement(By.cssSelector("selector-for-title")); // Replace with actual selector
-            titleElement.sendKeys(title);
-            // Continue for other details...
-            takeScreenshot("02_BeforeEvent" + (i + 1) + "Submit");
-
-            // Submit the event
-            WebElement submitButton = driver.findElement(By.cssSelector("selector-for-submit-button")); // Replace with actual selector
-            submitButton.click();
-            takeScreenshot("03_AfterEvent" + (i + 1) + "Submit");
-
-            // Verify the event is added if needed and perform other steps to ready for the next iteration if necessary
+        // Add events
+        for (String[] eventDetails : eventDetailsList) {
+            addEvent(eventDetails);
         }
-        file.close();
     }
+private void addEvent(String[] eventDetails) throws IOException {
+    WebElement addButton = wait.until(ExpectedConditions.elementToBeClickable(By.id("create_new_event_link")));
+    takeScreenshot("01_AfterClickingCalendar");
+    addButton.click();
+
+    WebElement titleElement = wait.until(ExpectedConditions.elementToBeClickable(By.id("textInput_7")));
+    takeScreenshot("02_AfterClickingAdd");
+    titleElement.click();
+    titleElement.sendKeys(eventDetails[0]);
+
+    WebElement dateElement = driver.findElement(By.id("selectable_0"));
+    dateElement.click();
+    dateElement.sendKeys(eventDetails[1]);
+
+    WebElement startTimeElement = driver.findElement(By.id("Select_0"));
+    startTimeElement.click();
+    startTimeElement.sendKeys(eventDetails[2]);
+
+    WebElement endTimeElement = driver.findElement(By.id("Select_1"));
+    endTimeElement.click();
+    endTimeElement.sendKeys(eventDetails[3]);
+
+    WebElement locationElement = driver.findElement(By.id("TextInput_5"));
+    locationElement.click();
+    locationElement.sendKeys(eventDetails[4]);
+
+    takeScreenshot("03_BeforeSubmit");
+
+    WebElement submitButton = driver.findElement(By.cssSelector("#edit_calendar_event_form_holder > form > fieldset > span > span > span > span > span > span > span.css-1sbhkbz-gridCol > span > span.css-ude3jz-view-flexItem > span > button > span"));
+    submitButton.click();
+    takeScreenshot("04_AfterSubmit");
+}
 
     @AfterClass
     public void tearDown() {
@@ -77,4 +98,25 @@ public class Scenario2Test {
         File destFile = new File(screenshotFolder + stepName + "_" + timeStamp + ".png");
         FileUtils.copyFile(scrFile, destFile);
     }
+
+    public List<String[]> readExcel() throws IOException {
+        FileInputStream file = new FileInputStream(new File("./src/test/resources/events.xlsx"));
+        Workbook workbook = new XSSFWorkbook(file);
+        Sheet sheet = workbook.getSheetAt(0);
+        List<String[]> eventDetailsList = new ArrayList<>();
+
+        for (int i = 0; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            String title = row.getCell(0).getStringCellValue();
+            String date = row.getCell(1).getStringCellValue();
+            String startTime = row.getCell(2).getStringCellValue();
+            String endTime = row.getCell(3).getStringCellValue();
+            String location = row.getCell(4).getStringCellValue();
+            String[] eventDetails = {title, date, startTime, endTime, location};
+            eventDetailsList.add(eventDetails);
+        }
+        workbook.close();
+        file.close();
+        return eventDetailsList;
+        }
 }

@@ -11,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.Date;
 
 public class Scenario3Test {
@@ -24,8 +25,9 @@ public class Scenario3Test {
     public void setUp() {
         WebDriverManager.chromedriver().setup();
         driver = new ChromeDriver();
-        wait = new WebDriverWait(driver, 10);
-        new File(scenarioFolder).mkdirs();
+        wait = new WebDriverWait(driver, Duration.ofMinutes(1));
+        String screenshotsFolder = "./src/test/resources/screenshots/Scenario2/";
+        new File(screenshotsFolder).mkdirs();
     }
 
     @Test
@@ -33,7 +35,7 @@ public class Scenario3Test {
         driver.get("https://service.northeastern.edu/tech?id=classrooms");
         takeScreenshot("01_AfterLoadingClassrooms");
 
-        WebElement classroomToSelect = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("YourSelectorForClassroom"))); // Replace with actual selector
+        WebElement classroomToSelect = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"x77ea03d9972dd1d8beddb4221153afa6\"]/div/div[2]/span/div/div/div[5]/div/div/div/a"))); // Replace with actual selector
         classroomToSelect.click();
         takeScreenshot("02_AfterSelectingClassroom");
 
@@ -41,7 +43,7 @@ public class Scenario3Test {
         nuflexLink.click();
         takeScreenshot("03_AfterSelectingNUFlexLink");
 
-        WebElement downloadLink = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("YourSelectorForDownloadLink"))); // Replace with actual selector for the PDF download link
+        WebElement downloadLink = wait.until(ExpectedConditions.elementToBeClickable(By.id("#downloads"))); // Replace with actual selector for the PDF download link
         downloadLink.click();
         // Assuming the browser is configured to automatically download the file to a specified location.
         takeScreenshot("04_AfterClickingDownload");

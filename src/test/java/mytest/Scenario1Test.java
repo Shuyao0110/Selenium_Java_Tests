@@ -12,6 +12,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.chromium.ChromiumDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.print.PrintOptions;
 //import org.openqa.selenium.print.PrintOutput;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -48,9 +49,11 @@ public class Scenario1Test {
         // Set up GeckoDriver path
         WebDriverManager.firefoxdriver().setup();
         FirefoxOptions options = new FirefoxOptions();
-        //options.addArguments("--headless");
-// Initialize WebDriver
-        //driver = new FirefoxDriver(options);
+        // Set Firefox profile to save as PDF
+        FirefoxProfile profile = new FirefoxProfile();
+        profile.setPreference("print.print_to_file", true);
+        profile.setPreference("print.print_to_filename", "screenshots/transcripts/pdf.pdf");
+        options.setProfile(profile);
         driver = new FirefoxDriver();
         wait = new WebDriverWait(driver, Duration.ofSeconds(60));
 
@@ -128,20 +131,36 @@ public class Scenario1Test {
         transcript.click();
 
         takeScreenshot("06_LoginMyNEU");
-        Thread.sleep(2000); // Wait for 2 seconds
+        // Read username and password from Excel file
+        FileInputStream file = new FileInputStream(new File("./src/test/resources/username.xlsx"));
+        Workbook workbook = new XSSFWorkbook(file);
+        Sheet sheet = workbook.getSheetAt(0);
+        Row row = sheet.getRow(1);
+        username = row.getCell(0).getStringCellValue();
+        password = row.getCell(1).getStringCellValue();
+        System.out.println(username);
+        System.out.println(password);
+        file.close();
+        Thread.sleep(5000); // Wait for 2 seconds
+
+        // WORKAROUND TO NAVIGATE THE DRIVER TO THE REQUIRED TAB
+        // Get all window handles
+        Set<String> handles = driver.getWindowHandles();
+        // Loop through each handle
+        for (String handle : handles) {
+            // Switch to the window
+            driver.switchTo().window(handle);
+
+            // Example: Switch to the tab with a specific title
+            if (driver.getTitle().equals("Log in")) {
+                break; // Exit the loop if the tab is found
+            }
+        }
         List<WebElement> frames = driver.findElements(By.tagName("input"));
+        System.out.println(frames);
         frames.get(0).click();
         frames.get(0).sendKeys(username);
         frames.get(1).sendKeys(password);
-//        WebElement userInput = wait.until(ExpectedConditions.elementToBeClickable(
-//                By.id("username")));
-//        Thread.sleep(2000); // Wait for 2 seconds
-//        userInput.click();
-//        userInput.sendKeys(extractUsername(username));
-//        WebElement passInput = wait.until(ExpectedConditions.elementToBeClickable(
-//                By.id("password")));
-//        passInput.click();
-//        passInput.sendKeys(password);
         takeScreenshot("07_BeforeLoginMyNEU");
         WebElement loginBtn = driver.findElement(
                 By.cssSelector("button.form-element"));
@@ -161,38 +180,29 @@ public class Scenario1Test {
                 By.cssSelector(".pagebodydiv > form:nth-child(2) > input:nth-child(2)"));
         submitBtn.click();
 
+        Thread.sleep(5000);
 
-        String currentUrl = driver.getCurrentUrl();
-        // Create a PrintOptions object
-        PrintOptions printOptions = new PrintOptions();
-        printOptions.setPageRanges("1-2");
+        // Use JavaScript to trigger the print dialog
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("window.print();");
 
-        String command = "Page.printToPDF";
-        Map<String, Object> params = new HashMap<>();
-        params.put("landscape", false);
-        Map<String, Object> output = ((ChromiumDriver)driver).executeCdpCommand(command, params);
+        // Wait for the print dialog to appear (you may need to adjust the wait time)
         try {
-            FileOutputStream fileOutputStream = new FileOutputStream("export.pdf");
-            byte[] byteArray = Base64.getDecoder().decode((String)output.get("data"));
-            fileOutputStream.write(byteArray);
-        } catch (IOException e) {
+            Thread.sleep(5000); // Wait for 5 seconds (adjust as needed)
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
+        // Simulate a click on the "Save" button in the print dialog
+        js.executeScript("window.onafterprint = function() { document.querySelector('#print-preview-toolbar').shadowRoot.querySelector('#sidebar').querySelector('#sidebar-toolbar').querySelector('button[data-l10n-id=print_save_as_pdf_label]').click(); };");
 
-        // Execute print command and get the print output
-//        PrintOutput printOutput = driver.print(printOptions);
-//
-//        // Get the content of the PDF as a base64 string
-//        String base64EncodedPDF = printOutput.getContent();
-//
-//        // Convert the base64 string to bytes and write to a file
-//        byte[] decodedPDF = java.util.Base64.getDecoder().decode(base64EncodedPDF);
-//        try (FileOutputStream fos = new FileOutputStream("transcript.pdf")) {
-//            fos.write(decodedPDF);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        // Wait for the file to be saved
+        try {
+            Thread.sleep(5000); // Wait for 5 seconds (adjust as needed)
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @AfterClass
@@ -202,18 +212,7 @@ public class Scenario1Test {
             driver.quit();
         }
     }
-    public static String extractUsername(String email) {
-        // Regular expression to match the part before the '@' symbol
-        String regex = "^(.*?)@";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(email);
 
-        if (matcher.find()) {
-            return matcher.group(1);
-        } else {
-            return "No match found";
-        }
-    }
     private void takeScreenshot(String stepName) throws IOException {
         File scrFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
         String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());

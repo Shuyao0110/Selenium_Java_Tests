@@ -1,6 +1,6 @@
 package mytest;
 import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -10,11 +10,14 @@ import org.testng.annotations.Test;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
+import java.awt.Robot;
+import java.awt.event.KeyEvent;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
+import java.util.Set;
 
 public class Scenario3Test {
 
@@ -25,15 +28,26 @@ public class Scenario3Test {
 
     @BeforeClass
     public void setUp() {
-        //WebDriverManager.chromedriver().setup();
-        //WebDriverManager.chromedriver().browserVersion("122").setup();
-        //driver = new ChromeDriver();
+        // Set the directory where files should be downloaded
+        String downloadDir = "/scenarioFolder/directory";
+
+        // Create FirefoxOptions object
+        FirefoxOptions options = new FirefoxOptions();
+
+        // Set preferences to change the download directory
+        options.addPreference("browser.download.dir", downloadDir);
+        options.addPreference("browser.download.folderList", 2); // Use custom directory
+
+        // Set other preferences to automatically download files
+        options.addPreference("browser.helperApps.neverAsk.saveToDisk", "application/pdf"); // Set MIME type of the file
+
+        // Initialize FirefoxDriver with the modified options
         driver = new FirefoxDriver();
+
         WebDriverManager.firefoxdriver().setup();
         wait = new WebDriverWait(driver, Duration.ofMinutes(1));
         String screenshotsFolder = "./src/test/resources/screenshots/Scenario3/";
         new File(screenshotsFolder).mkdirs();
-        System.out.println("This is a test");
     }
 
     @Test
@@ -54,12 +68,34 @@ public class Scenario3Test {
         Thread.sleep(2000); // Wait for 2 seconds
         takeScreenshot("03_AfterSelectingNUFlexLink");
 
+
+        // WORKAROUND TO NAVIGATE THE DRIVER TO THE REQUIRED TAB
+        // Get all window handles
+        Set<String> handles = driver.getWindowHandles();
+        // Loop through each handle
+        for (String handle : handles) {
+            // Switch to the window
+            driver.switchTo().window(handle);
+
+            // Example: Switch to the tab with a specific title
+            if (driver.getTitle().contains("NUFlex")) {
+                break; // Exit the loop if the tab is found
+            }
+        }
+
         WebElement downloadLink = wait.until(ExpectedConditions.elementToBeClickable(
                 By.id("download"))); // Replace with actual selector for the PDF download link
         downloadLink.click();
-        Thread.sleep(2000); // Wait for 2 seconds
+        Thread.sleep(6000); // Wait for 2 seconds
         // Assuming the browser is configured to automatically download the file to a specified location.
         takeScreenshot("04_AfterClickingDownload");
+
+//        Robot robot = new Robot();
+//
+//        // Press Enter to save the file (Assuming the Save dialog is already open)
+//        robot.keyPress(KeyEvent.VK_ENTER);
+//        robot.keyRelease(KeyEvent.VK_ENTER);
+        Thread.sleep(6000); // Wait for 2 seconds
     }
 
     @AfterClass

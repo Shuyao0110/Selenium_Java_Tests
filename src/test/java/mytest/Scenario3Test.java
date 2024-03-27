@@ -8,6 +8,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.firefox.FirefoxDriver;
+
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -23,11 +25,15 @@ public class Scenario3Test {
 
     @BeforeClass
     public void setUp() {
-        WebDriverManager.chromedriver().setup();
-        driver = new ChromeDriver();
+        //WebDriverManager.chromedriver().setup();
+        //WebDriverManager.chromedriver().browserVersion("122").setup();
+        //driver = new ChromeDriver();
+        driver = new FirefoxDriver();
+        WebDriverManager.firefoxdriver().setup();
         wait = new WebDriverWait(driver, Duration.ofMinutes(1));
-        String screenshotsFolder = "./src/test/resources/screenshots/Scenario2/";
+        String screenshotsFolder = "./src/test/resources/screenshots/Scenario3/";
         new File(screenshotsFolder).mkdirs();
+        System.out.println("This is a test");
     }
 
     @Test
@@ -35,16 +41,23 @@ public class Scenario3Test {
         driver.get("https://service.northeastern.edu/tech?id=classrooms");
         takeScreenshot("01_AfterLoadingClassrooms");
 
-        WebElement classroomToSelect = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"x77ea03d9972dd1d8beddb4221153afa6\"]/div/div[2]/span/div/div/div[5]/div/div/div/a"))); // Replace with actual selector
+        WebElement classroomToSelect = wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//*[@id=\"x77ea03d9972dd1d8beddb4221153afa6\"]/div/div[2]/span/div/div/div[5]/div/div/div/a"))); // Replace with actual selector
         classroomToSelect.click();
+        Thread.sleep(2000); // Wait for 2 seconds
         takeScreenshot("02_AfterSelectingClassroom");
 
-        WebElement nuflexLink = wait.until(ExpectedConditions.elementToBeClickable(By.linkText("NUFlex Auto and Manual Classroom")));
+
+        WebElement nuflexLink = wait.until(ExpectedConditions.elementToBeClickable(
+                By.linkText("NUFlex Auto and Manual Classroom")));
         nuflexLink.click();
+        Thread.sleep(2000); // Wait for 2 seconds
         takeScreenshot("03_AfterSelectingNUFlexLink");
 
-        WebElement downloadLink = wait.until(ExpectedConditions.elementToBeClickable(By.id("#downloads"))); // Replace with actual selector for the PDF download link
+        WebElement downloadLink = wait.until(ExpectedConditions.elementToBeClickable(
+                By.id("download"))); // Replace with actual selector for the PDF download link
         downloadLink.click();
+        Thread.sleep(2000); // Wait for 2 seconds
         // Assuming the browser is configured to automatically download the file to a specified location.
         takeScreenshot("04_AfterClickingDownload");
     }
